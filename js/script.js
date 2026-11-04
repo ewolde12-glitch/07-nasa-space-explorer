@@ -39,11 +39,9 @@ function showGalleryMessage(message) {
 	gallery.replaceChildren();
 }
 
-// Render NASA's explanation formatting without trusting arbitrary HTML.
-function appendExplanation(element, explanation) {
-	const parsedExplanation = new DOMParser().parseFromString(explanation || '', 'text/html');
-	const safeTags = new Set(['a', 'b', 'br', 'em', 'i', 'p', 'strong', 'sub', 'sup']);
-
+// Render NASA's formatting without trusting arbitrary HTML.
+function appendSafeHtml(element, html, safeTags) {
+	const parsedHtml = new DOMParser().parseFromString(html || '', 'text/html');
 	function copySafeNodes(nodes, parent) {
 		Array.from(nodes).forEach((node) => {
 			if (node.nodeType === Node.TEXT_NODE) {
@@ -64,7 +62,12 @@ function appendExplanation(element, explanation) {
 			const safeElement = document.createElement(tagName);
 			if (tagName === 'a') {
 				try {
-					const linkUrl = new URL(node.getAttribute('href'), window.location.href);
+					const href = node.getAttribute('href');
+					if (!href) {
+						copySafeNodes(node.childNodes, parent);
+						return;
+					}
+					const linkUrl = new URL(href, window.location.href);
 					if (linkUrl.protocol !== 'http:' && linkUrl.protocol !== 'https:') {
 						copySafeNodes(node.childNodes, parent);
 						return;
@@ -84,7 +87,12 @@ function appendExplanation(element, explanation) {
 	}
 
 	element.replaceChildren();
-	copySafeNodes(parsedExplanation.body.childNodes, element);
+	copySafeNodes(parsedHtml.body.childNodes, element);
+}
+
+function appendExplanation(element, explanation) {
+	const explanationTags = new Set(['a', 'b', 'br', 'em', 'i', 'p', 'strong', 'sub', 'sup']);
+	appendSafeHtml(element, explanation, explanationTags);
 }
 
 function openImageModal(image) {
@@ -161,7 +169,11 @@ function displayImages(images) {
 		if (image.copyright) {
 			const copyright = document.createElement('p');
 			copyright.className = 'copyright';
-			copyright.textContent = `Image credit: ${image.copyright}`;
+			copyright.textContent = 'Image credit: ';
+			const credit = document.createElement('span');
+			const creditTags = new Set(['a', 'br']);
+			appendSafeHtml(credit, image.copyright, creditTags);
+			copyright.append(credit);
 			cardContent.append(copyright);
 		}
 
