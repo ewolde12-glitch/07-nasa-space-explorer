@@ -341,6 +341,15 @@ button:disabled {
   overflow-wrap: anywhere;
 }
 
+.copyright a {
+  color: inherit;
+  text-underline-offset: 2px;
+}
+
+.copyright a:hover {
+  color: #fff;
+}
+
 .media-link {
   min-height: 190px;
   display: grid;
@@ -524,3 +533,4 @@ button:disabled {
     animation-duration: 0.01ms !important;
   }
 }
+
