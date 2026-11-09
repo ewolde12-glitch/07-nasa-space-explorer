@@ -1,0 +1,107 @@
+
+const CACHE_NAME = "nasa-space-explorer-v1";
+const API_CACHE = "nasa-api-cache-v1";
+
+// Files needed to run the application
+const APP_FILES = [
+  "./",
+  "./index.html",
+  "./style.css",
+  "./script.js",
+  "./manifest.json",
+  "./icons/icon-192.png",
+  "./icons/icon-512.png"
+];
+
+// Install service worker and save application files
+self.addEventListener("install", (event) => {
+  event.waitUntil(
+    caches.open(CACHE_NAME)
+      .then((cache) => cache.addAll(APP_FILES))
+  );
+
+  self.skipWaiting();
+});
+
+// Activate service worker
+self.addEventListener("activate", (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames
+          .filter((name) =>
+            name !== CACHE_NAME &&
+            name !== API_CACHE
+          )
+          .map((name) => caches.delete(name))
+      );
+    })
+  );
+
+  self.clients.claim();
+});
+
+// Handle application and NASA API requests
+self.addEventListener("fetch", (event) => {
+  const request = event.request;
+
+  if (request.method !== "GET") return;
+
+  const url = new URL(request.url);
+
+  // NASA API: network first
+  const isNASARequest =
+    url.hostname === "api.nasa.gov" ||
+    url.hostname === "science.nasa.gov";
+
+  if (isNASARequest) {
+    event.respondWith(
+      (async () => {
+        const cache = await caches.open(API_CACHE);
+
+        try {
+          const response = await fetch(request);
+
+          if (response.ok) {
+            await cache.put(request, response.clone());
+          }
+
+          return response;
+        } catch (error) {
+          const savedResponse = await cache.match(request);
+
+          if (savedResponse) {
+            return savedResponse;
+          }
+
+          return new Response(
+            JSON.stringify({
+              error: "Offline. No saved NASA data available."
+            }),
+            {
+              status: 503,
+              headers: {
+                "Content-Type": "application/json"
+              }
+            }
+          );
+        }
+      })()
+    );
+
+    return;
+  }
+
+  // Application files: cache first
+  if (url.origin === self.location.origin) {
+    event.respondWith(
+      caches.match(request).then((cachedResponse) => {
+        if (cachedResponse) {
+          return cachedResponse;
+        }
+
+        return fetch(request);
+      })
+    );
+  }
+});
