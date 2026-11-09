@@ -12,6 +12,13 @@ const modalExplanation = document.getElementById('modalExplanation');
 const randomFact = document.getElementById('randomFact');
 const statusMessage = document.getElementById('status');
 
+// Register the service worker when served over HTTPS or localhost.
+if ('serviceWorker' in navigator) {
+	navigator.serviceWorker.register('./service-worker.js').catch((error) => {
+		console.error('Service worker registration failed:', error);
+	});
+}
+
 // Call the setupDateInputs function from dateRange.js
 // This sets up the date pickers to:
 // - Default to a range of 9 days (from 9 days ago to today)
