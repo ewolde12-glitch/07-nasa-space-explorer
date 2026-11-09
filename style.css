@@ -534,3 +534,36 @@ button:disabled {
   }
 }
 
+/* Offline indicator */
+
+.offline-status {
+  background: #b45309;
+  color: white;
+  padding: 12px;
+  text-align: center;
+  border-radius: 8px;
+  margin: 12px 0;
+}
+
+/* Install and notification buttons */
+
+#installButton,
+#notificationButton {
+  background: #2563eb;
+  color: white;
+  padding: 12px 18px;
+  border: none;
+  border-radius: 8px;
+  margin: 8px 5px;
+  cursor: pointer;
+  font-size: 15px;
+}
+
+#installButton:hover,
+#notificationButton:hover {
+  background: #1d4ed8;
+}
+
+[hidden] {
+  display: none !important;
+}
